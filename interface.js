@@ -97,7 +97,13 @@ function newDfa() {
 
 function refreshDefinition() {
   errors = validate(model);
-  byId("machine-name").textContent = activeExample?.name ?? "Custom DFA";
+  byId("machine-name").textContent = activeExample?.name ?? (model.name || "Custom DFA");
+  const regexStr = getDfaRegex(model);
+  const regexValEl = byId("state-regex-val");
+  if (regexValEl) {
+    regexValEl.textContent = regexStr;
+    regexValEl.title = `Regular Expression: ${regexStr}`;
+  }
   setBadge(byId("validity"), errors.length ? "Needs edits" : "Valid DFA", errors.length ? "bad" : "good");
   byId("validation").replaceChildren(element("strong", errors.length ? "Fix these before running" : "All transitions are valid."));
   if (errors.length) {
@@ -112,6 +118,8 @@ function refreshDefinition() {
 
 function onDefinitionChange() {
   activeExample = null;
+  model.name = "Custom DFA";
+  delete model.regex;
   refreshDefinition();
 }
 
@@ -366,7 +374,7 @@ byId("start").addEventListener("change", event => {
 byId("states").addEventListener("input", editSets);
 byId("alphabet").addEventListener("input", editSets);
 stepButton.addEventListener("click", () => {
-  if (tab === "editor") selectTab("trace");
+  if (tab === "editor" || tab === "regex") selectTab("trace");
   jumpTo(cursor + 1);
 });
 playButton.addEventListener("click", () => {
@@ -375,9 +383,113 @@ playButton.addEventListener("click", () => {
     renderRun();
     return;
   }
-  if (tab === "editor") selectTab("trace");
+  if (tab === "editor" || tab === "regex") selectTab("trace");
   playing = true;
   tick();
+});
+
+function convertRegexToDfa() {
+  const inputEl = byId("regex-input");
+  if (!inputEl) return;
+  const pattern = inputEl.value.trim();
+  const statusBox = byId("regex-status");
+  if (!pattern) {
+    if (statusBox) {
+      statusBox.className = "regex-status-box active error";
+      statusBox.textContent = "Please enter a regular expression.";
+    }
+    return;
+  }
+  try {
+    const dfa = regexToDfa(pattern);
+    dfa.name = `Regex: ${pattern}`;
+    dfa.regex = pattern;
+    activeExample = null;
+    model = dfa;
+    byId("states").value = model.states.join(", ");
+    byId("alphabet").value = model.alphabet.join(", ");
+    zoom = 1;
+    renderEditorChoices();
+    refreshDefinition();
+
+    if (statusBox) {
+      statusBox.className = "regex-status-box active success";
+      statusBox.replaceChildren();
+
+      const msg = element("div");
+      const acceptingNames = model.accepting.length ? model.accepting.join(", ") : "none";
+      msg.innerHTML = `<strong>DFA Generated!</strong> Created minimal DFA with <strong>${model.states.length}</strong> states (<em>${model.states.join(", ")}</em>) and alphabet {${model.alphabet.join(", ")}}. Accepting: {${acceptingNames}}.`;
+
+      const actions = element("div", undefined, "regex-status-actions");
+      const traceBtn = button("Test in Trace ▷", () => selectTab("trace"), "outline");
+      const tableBtn = button("View Table ⊞", () => selectTab("table"), "outline");
+      actions.append(traceBtn, tableBtn);
+
+      statusBox.append(msg, actions);
+    }
+  } catch (err) {
+    if (statusBox) {
+      statusBox.className = "regex-status-box active error";
+      statusBox.textContent = "Syntax Error: " + (err.message || String(err));
+    }
+  }
+}
+
+byId("regex-convert-btn")?.addEventListener("click", convertRegexToDfa);
+byId("regex-clear-btn")?.addEventListener("click", () => {
+  const inputEl = byId("regex-input");
+  if (inputEl) {
+    inputEl.value = "";
+    inputEl.focus();
+  }
+  const statusBox = byId("regex-status");
+  if (statusBox) statusBox.className = "regex-status-box";
+});
+
+byId("regex-input")?.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    convertRegexToDfa();
+  }
+});
+
+for (const symBtn of document.querySelectorAll(".sym-btn")) {
+  symBtn.addEventListener("click", () => {
+    const sym = symBtn.dataset.sym;
+    const field = byId("regex-input");
+    if (!field || !sym) return;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? field.value.length;
+    const val = field.value;
+    field.value = val.slice(0, start) + sym + val.slice(end);
+    field.focus();
+    field.selectionStart = field.selectionEnd = start + sym.length;
+  });
+}
+
+for (const presetBtn of document.querySelectorAll(".preset-btn")) {
+  presetBtn.addEventListener("click", () => {
+    const pat = presetBtn.dataset.pattern;
+    const inputEl = byId("regex-input");
+    if (inputEl && pat) {
+      inputEl.value = pat;
+      convertRegexToDfa();
+    }
+  });
+}
+
+byId("copy-regex-pill")?.addEventListener("click", async () => {
+  const regexStr = byId("state-regex-val")?.textContent;
+  if (!regexStr || regexStr === "—" || regexStr === "Incomplete DFA") return;
+  try {
+    await navigator.clipboard.writeText(regexStr);
+    const btn = byId("copy-regex-pill");
+    const orig = btn.textContent;
+    btn.textContent = "✓";
+    setTimeout(() => { btn.textContent = orig; }, 1400);
+  } catch {
+    // clipboard not allowed or headless
+  }
 });
 byId("reset").addEventListener("click", prepareRun);
 byId("zoom-in").addEventListener("click", () => {

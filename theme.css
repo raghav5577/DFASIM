@@ -39,11 +39,18 @@ h1 em { color: var(--red); text-shadow: 3px 3px #631623 }
 .diagram-panel { border-top-color: #d83d55 }
 .panel-head, .section-head, .inspect-head, .dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 10px }
 .panel-head { padding: 12px 16px }
+.panel-head-left { display: flex; flex-direction: column; gap: 4px; min-width: 0 }
+.title-with-regex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.regex-pill { display: inline-flex; align-items: center; gap: 6px; background: #0c172a; border: 1px solid #2a476d; border-radius: 5px; padding: 2px 7px; color: var(--mint); max-width: min(440px, 60vw); box-shadow: inset 0 1px 3px #040914 }
+.regex-pill-tag { font: 800 10px/1.1 var(--mono); color: #ff9baa; background: #391726; border: 1px solid #732a3f; padding: 2px 5px; border-radius: 3px; letter-spacing: .08em; text-transform: uppercase }
+.regex-pill code { font: 700 12px/1.2 var(--mono); color: #50e3c2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.pill-copy { background: transparent; border: 0; color: var(--soft); padding: 0 4px; font-size: 13px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; cursor: pointer }
+.pill-copy:hover { color: #fff; background: #1c3150 }
 h2 { font-size: 17px; font-weight: 850; line-height: 1.25 }
 .panel-head h2, .simulation h2 { font-style: italic; text-transform: uppercase; letter-spacing: .035em }
 .heading-icon { color: var(--red); font-style: normal; margin-right: 5px }
 .sub { color: var(--soft); font-size: 12px }
-.panel-head .sub { margin-top: 4px; margin-left: 25px }
+.panel-head .sub { margin-left: 25px }
 .badge { display: inline-block; font: 750 11px/1.2 var(--mono); text-transform: uppercase; letter-spacing: .05em; padding: 6px 8px; border: 1px solid #36506c; color: #c3d6ee; background: #12243a; white-space: nowrap; border-radius: 4px }
 .badge.good { color: var(--mint); background: #0d2c31; border-color: #276360 }
 .badge.bad { color: #ff8395; background: #32192a; border-color: #844153 }
@@ -116,6 +123,23 @@ td select { width: 100%; min-width: 52px; padding: 4px; font: inherit }
 td.active-cell { color: #ffd5db; background: #4b2337 }
 .validation { margin-top: 10px; color: var(--soft); font-size: 12px; max-height: 120px; overflow: auto }
 .validation ul { padding-left: 18px; margin: 4px 0 0; color: #ff9baa }
+.regex-chars-toolbar { display: grid; gap: 5px; margin-top: 3px }
+.regex-sym-btns { display: flex; flex-wrap: wrap; gap: 5px }
+.sym-btn { min-height: 28px; min-width: 32px; padding: 2px 8px; font: 700 13px var(--mono); color: var(--blue); background: #0e1728; border: 1px solid #2a4365; border-radius: 4px }
+.sym-btn:hover { background: #1c3352; color: #fff }
+.regex-actions { display: flex; gap: 8px; margin-top: 6px }
+.regex-status-box { margin-top: 13px; padding: 10px 12px; border-radius: 5px; font-size: 12px; line-height: 1.4; display: none }
+.regex-status-box.active { display: block }
+.regex-status-box.success { background: #0d2c31; border: 1px solid #276360; color: #c4f7ed }
+.regex-status-box.error { background: #32192a; border: 1px solid #844153; color: #ff9baa }
+.regex-status-actions { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap }
+.regex-status-actions button { font-size: 11px; min-height: 28px; padding: 3px 9px }
+.regex-presets { margin-top: 18px; padding-top: 13px; border-top: 1px solid var(--line) }
+.preset-list { display: grid; gap: 6px; margin-top: 9px }
+.preset-btn { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; padding: 7px 10px; background: #111e33; border: 1px solid #284161; border-radius: 4px; color: var(--ink); font-size: 12px }
+.preset-btn code { font: 700 12px var(--mono); color: var(--mint) }
+.preset-btn span { color: var(--soft); font-size: 11px; margin-left: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.preset-btn:hover { border-color: var(--red); background: #192b47 }
 footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; color: var(--soft); font: 11px/1.4 var(--mono); padding: 15px 0 }
 dialog { width: min(440px, calc(100% - 28px)); border: 1px solid #4e6c8e; color: var(--ink); background: var(--panel); border-radius: 10px; padding: 17px; box-shadow: 0 15px 90px #000 }
 dialog::backdrop { background: #050713c9 }

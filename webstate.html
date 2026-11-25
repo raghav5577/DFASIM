@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0d16">
+  <title>Webstate Lab — DFA Simulator</title>
+  <style>
+/* STYLES */
+  </style>
+</head>
+<body>
+  <header class="mast">
+    <div class="mast-inner">
+      <div class="brand">
+        <svg viewBox="0 0 40 40" class="emblem" aria-hidden="true"><path d="M20 9l4 5-1 5 2 4-5 8-5-8 2-4-1-5z" fill="currentColor"/><path d="M16 16L10 13 7 7m9 12L8 18 4 13m12 9-7 2-4 7m12-6-5 5-2 6m14-20 6-3 3-6m-9 12 8-1 4-5m-12 9 7 2 4 7m-12-6 5 5 2 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <strong>WEBSTATE</strong><span class="brand-rule"></span><span class="brand-caption">DFA SIMULATOR</span>
+      </div>
+      <div class="mast-actions"><button id="help-button" class="ghost" type="button">Guide</button><button id="examples-button" class="outline" type="button">Examples <span aria-hidden="true">⌄</span></button></div>
+    </div>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="title">
+      <div><h1 id="title">WEBSTATE <em>LAB</em></h1><p>Build a DFA and follow each symbol through its web of states.</p></div>
+      <button type="button" id="new-button" class="outline new-dfa"><span aria-hidden="true">+</span> New DFA</button>
+    </section>
+    <div class="workbench">
+      <div class="left-stack">
+        <section class="panel diagram-panel" aria-labelledby="diagram-title">
+          <header class="panel-head">
+            <div class="panel-head-left">
+              <div class="title-with-regex">
+                <h2 id="diagram-title"><span class="heading-icon" aria-hidden="true">⌘</span> State diagram</h2>
+                <div id="state-regex-pill" class="regex-pill" title="Equivalent Regular Expression for this DFA">
+                  <span class="regex-pill-tag">Regex</span>
+                  <code id="state-regex-val">—</code>
+                  <button id="copy-regex-pill" type="button" class="pill-copy" title="Copy regular expression" aria-label="Copy regular expression">⧉</button>
+                </div>
+              </div>
+              <div id="machine-name" class="sub"></div>
+            </div>
+            <span id="validity" class="badge"></span>
+          </header>
+          <div class="diagram" id="diagram">
+            <div class="graph-scroll" tabindex="0" aria-label="Scrollable DFA graph"><svg id="graph" role="img" aria-label="DFA states and transition arrows"></svg></div>
+            <div class="graph-tools"><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="zoom-in" type="button" aria-label="Zoom in">+</button><button id="fit" type="button" aria-label="Fit diagram">⌖</button></div>
+          </div>
+          <div class="legend"><span><i class="key current"></i> Current state</span><span><i class="key accept"></i> Accepting state</span><span><i class="key strand"></i> Active transition</span></div>
+        </section>
+        <section class="panel simulation" aria-labelledby="simulation-title">
+          <header class="section-head"><h2 id="simulation-title"><span class="heading-icon" aria-hidden="true">▷</span> Simulation</h2><label class="speed">Speed <select id="speed"><option value="1050">Slow</option><option value="650" selected>Normal</option><option value="300">Fast</option></select></label></header>
+          <div class="run-controls">
+            <label class="input-wrap" for="input"><span>TEST STRING</span><input id="input" autocomplete="off" spellcheck="false" maxlength="2000" placeholder="ε (empty string)"></label>
+            <button id="step" type="button" class="outline">Step <span aria-hidden="true">↦</span></button>
+            <button id="play" type="button" class="primary"><span aria-hidden="true">▶</span> Play</button>
+            <button id="reset" type="button" class="outline reset" aria-label="Reset run" title="Reset run">↺</button>
+          </div>
+          <div class="tape-wrap"><span class="micro">INPUT TAPE</span><div id="tape" class="tape"></div><span id="progress" class="progress"></span></div>
+          <p id="run-message" class="run-message" aria-live="polite"></p>
+        </section>
+      </div>
+      <aside class="panel inspection" aria-label="DFA inspector">
+        <nav class="tabs" id="tabs" aria-label="Inspector views">
+          <button type="button" aria-pressed="true" data-tab="trace">Trace</button>
+          <button type="button" aria-pressed="false" data-tab="regex">Regex → DFA</button>
+          <button type="button" aria-pressed="false" data-tab="editor">DFA Editor</button>
+          <button type="button" aria-pressed="false" data-tab="table">Table</button>
+        </nav>
+        <section id="trace-pane" class="pane">
+          <div class="inspect-head"><div><h2>Execution trace</h2><p class="sub" id="trace-sub"></p></div><span class="badge" id="verdict" aria-live="polite"></span></div>
+          <ol id="trace-list" class="trace-list"></ol>
+          <div class="coach"><span class="coach-icon" aria-hidden="true">✦</span><div><h3>Trace Coach</h3><p id="coach" aria-live="polite"></p></div></div>
+          <div class="checks"><div class="section-head"><h3>Example checks</h3><button id="check" type="button" class="ghost check">Verify</button></div><div id="check-results"></div></div>
+        </section>
+        <section id="regex-pane" class="pane" hidden>
+          <div class="inspect-head"><div><h2>Regex to DFA</h2><p class="sub">Convert a regular expression into an equivalent minimal DFA.</p></div></div>
+          <div class="form-grid">
+            <label for="regex-input">
+              Regular expression
+              <input id="regex-input" type="text" placeholder="e.g. (0|1)*01 or (a|b)*abb" spellcheck="false" autocomplete="off" value="(0|1)*01">
+            </label>
+            <div class="regex-chars-toolbar" aria-label="Insert regex symbols">
+              <span class="micro">QUICK INSERT</span>
+              <div class="regex-sym-btns">
+                <button type="button" class="sym-btn" data-sym="(" title="Open parenthesis">(</button>
+                <button type="button" class="sym-btn" data-sym=")" title="Close parenthesis">)</button>
+                <button type="button" class="sym-btn" data-sym="|" title="Union / Alternation">|</button>
+                <button type="button" class="sym-btn" data-sym="*" title="Kleene star (0 or more)">*</button>
+                <button type="button" class="sym-btn" data-sym="+" title="Plus (1 or more)">+</button>
+                <button type="button" class="sym-btn" data-sym="?" title="Optional (0 or 1)">?</button>
+                <button type="button" class="sym-btn" data-sym="ε" title="Epsilon (empty string)">ε</button>
+              </div>
+            </div>
+            <div class="regex-actions">
+              <button id="regex-convert-btn" type="button" class="primary">Convert to DFA</button>
+              <button id="regex-clear-btn" type="button" class="outline">Clear</button>
+            </div>
+          </div>
+          <div id="regex-status" class="regex-status-box" aria-live="polite"></div>
+          <div class="regex-presets">
+            <div class="section-head">
+              <h3>Quick Presets</h3>
+            </div>
+            <div class="preset-list">
+              <button type="button" class="ghost preset-btn" data-pattern="(0|1)*01">
+                <code>(0|1)*01</code>
+                <span>Ends in 01</span>
+              </button>
+              <button type="button" class="ghost preset-btn" data-pattern="(a|b)*abb">
+                <code>(a|b)*abb</code>
+                <span>Ends in abb</span>
+              </button>
+              <button type="button" class="ghost preset-btn" data-pattern="0*1(0|10*1)*">
+                <code>0*1(0|10*1)*</code>
+                <span>Odd number of 1s</span>
+              </button>
+              <button type="button" class="ghost preset-btn" data-pattern="(00|11)*">
+                <code>(00|11)*</code>
+                <span>Even pairs of 0s or 1s</span>
+              </button>
+              <button type="button" class="ghost preset-btn" data-pattern="(a|b)*a(a|b)">
+                <code>(a|b)*a(a|b)</code>
+                <span>2nd symbol from end is a</span>
+              </button>
+              <button type="button" class="ghost preset-btn" data-pattern="a(ba)*b">
+                <code>a(ba)*b</code>
+                <span>Alternating a and b</span>
+              </button>
+            </div>
+          </div>
+        </section>
+        <section id="editor-pane" class="pane" hidden>
+          <div class="inspect-head"><div><h2>Define your DFA</h2><p class="sub">Set the five parts of your machine.</p></div></div>
+          <div class="form-grid">
+            <label>States <span class="sub">Q</span><input id="states" placeholder="q0, q1" spellcheck="false"></label>
+            <label>Alphabet <span class="sub">Σ</span><input id="alphabet" placeholder="0, 1" spellcheck="false"></label>
+            <label>Start state <span class="sub">s</span><select id="start"></select></label>
+            <fieldset><legend>Accepting states <span class="sub">A</span></legend><div id="accepting" class="accepting"></div></fieldset>
+          </div>
+          <h3 class="rules-title">Transition rules <span class="sub">δ</span></h3>
+          <p class="sub rules-note">Choose one destination for each state and symbol.</p>
+          <div id="rules" class="table-scroll"></div>
+          <div id="validation" class="validation" aria-live="polite"></div>
+        </section>
+        <section id="table-pane" class="pane" hidden>
+          <div class="inspect-head"><div><h2>Transition table</h2><p class="sub">δ(state, symbol) → destination</p></div></div>
+          <div id="table" class="table-scroll"></div>
+        </section>
+      </aside>
+    </div>
+    <footer><span>Deterministic finite automata</span><span>Raghav Karnatak · Utsav Yadav</span></footer>
+  </main>
+  <dialog id="examples-dialog"><div class="dialog-head"><h2>Load an example</h2><form method="dialog"><button class="ghost" aria-label="Close examples">×</button></form></div><div id="example-options" class="example-options"></div></dialog>
+  <dialog id="help-dialog"><div class="dialog-head"><h2>Quick guide</h2><form method="dialog"><button class="ghost" aria-label="Close guide">×</button></form></div><ol class="guide"><li>Load an example, use <strong>Regex → DFA</strong> to generate a machine from regular expressions, or choose <strong>New DFA</strong>.</li><li>In the editor, enter comma-separated states and single-character alphabet symbols, or edit generated transitions directly.</li><li>The regular expression representing the active DFA is displayed right beside the <strong>State diagram</strong> title.</li><li>Type a test string. Use <strong>Step</strong> to consume one character, <strong>Play</strong> to animate, or select a tape symbol or trace row to jump. An empty input tests ε.</li><li>The final state decides acceptance. The Trace Coach explains the selected step. Use the <strong>Table</strong> tab to view δ in grid format.</li></ol></dialog>
+  <script>
+/* ENGINE */
+/* INTERFACE */
+  </script>
+</body>
+</html>
